@@ -112,6 +112,25 @@ const SmolFrame = {
     return SmolFrame.findNearestFrame(element.parentElement);
   },
 
+  scrollToView(element) {
+    const offset = element.getBoundingClientRect();
+    const topOver = offset.top < 0;
+    const bottomUnder = offset.bottom > window.innerHeight;
+    var scroll = 'start';
+    if (!topOver && !bottomUnder)
+      scroll = false;
+    else if (topOver)
+      scroll = 'start';
+    else if (bottomUnder)
+      scroll = 'end';
+    if (scroll)
+      element.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest",
+        block: scroll
+      });
+  },
+
   async navigate(url, targetObject, options = {}) {
     let finalTargetEl = targetObject;
 
@@ -154,22 +173,6 @@ const SmolFrame = {
       // update html and frame state
       finalTargetEl.innerHTML = newContent.innerHTML;
       finalTargetEl.setAttribute('data-current-url', res.url || url);
-      const offset = finalTargetEl.getBoundingClientRect();
-      const topOver = offset.top < 0;
-      const bottomUnder = offset.bottom > window.innerHeight;
-      var scroll = 'start';
-      if (!topOver && !bottomUnder)
-        scroll = false;
-      else if (topOver)
-        scroll = 'start';
-      else if (bottomUnder)
-        scroll = 'end';
-      if (scroll)
-        finalTargetEl.scrollIntoView({
-          behavior: "smooth",
-          inline: "nearest",
-          block: scroll
-        });
 
       // handle title and history
       const isStateless = finalTargetEl.hasAttribute('data-frame-stateless')
@@ -201,12 +204,16 @@ const SmolFrame = {
       console.error('[smolFrame] Load error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Network error';
       finalTargetEl.setAttribute('data-frame-error', errorMessage);
+      SmolFrame.scrollToView(finalTargetEl);
     } finally {
       targetObject.removeAttribute('data-frame-loading');
       targetObject.removeAttribute('data-frame-submitting');
       if (finalTargetEl && finalTargetEl !== targetObject) {
         finalTargetEl.removeAttribute('data-frame-loading');
         finalTargetEl.removeAttribute('data-frame-submitting');
+        SmolFrame.scrollToView(finalTargetEl);
+      } else {
+        SmolFrame.scrollToView(finalTargetEl);
       }
     }
   }
