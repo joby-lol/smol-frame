@@ -17,7 +17,7 @@ class SmolFrame
 
     public static function scriptFile(): string
     {
-        return __DIR__ . '/smol-frame.js';
+        return __DIR__ . '/smolFrame.js';
     }
 
     public static function scriptContent(): string
@@ -27,7 +27,7 @@ class SmolFrame
 
     public static function cssFile(): string
     {
-        return __DIR__ . '/smol-frame.css';
+        return __DIR__ . '/smolFrame.css';
     }
 
     public static function cssContent(): string

@@ -31,12 +31,34 @@ A zero-dependency, ultra-lightweight (~1.3KB gzipped) Progressive Enhancement en
 
 ```html
 <main id="app-content" data-frame>
-  <h1>Welcome to Nodez</h1>
-  <a href="/admin/nodes" data-frame-target="app-content">Manage Nodes</a>
+  <h1>Welcome to my app</h1>
+  <a href="/admin/" data-frame-target="app-content">Manage CMS</a>
 </main>
 ```
 
-When clicked, `smolFrame` fetches `/admin/nodes`, extracts the element matching `#app-content` from the returned HTML, replaces its inner content, updates the URL history, and updates the document title!
+When clicked, `smolFrame` fetches `/admin/`, extracts the element matching `#app-content` from the returned HTML, replaces its inner content, updates the URL history, and updates the document title!
+
+### PHP/Composer
+
+Library is also published on Packagist, with a PHP helper for getting the Javascript and minimal CSS. This may be helpful if you are bundling this library in a PHP project and wish to take advantage of Composer for versioning/updating it.
+
+```bash
+composer install joby/smol-frame
+```
+
+```php
+use Joby\Smol\Frame\SmolFrame;
+
+// get a full path to the library's current version of the Javascript
+SmolFrame::scriptFile();
+// get the current raw Javascript content of the file
+SmolFrame::scriptContent();
+
+// get a full path to the library's current version of the minimal CSS file
+SmolFrame::cssFile();
+// get the current raw CSS content of the file
+SmolFrame::cssContent();
+```
 
 ## HTML Attributes Reference
 
@@ -56,7 +78,7 @@ When clicked, `smolFrame` fetches `/admin/nodes`, extracts the element matching 
 Target an explicit container by `id`:
 
 ```html
-<a href="/nodes/10" data-frame-target="main-frame">View Node 10</a>
+<a href="/page/10" data-frame-target="main-frame">View page 10</a>
 
 <div id="main-frame" data-frame>
   </div>
@@ -68,8 +90,8 @@ You can tell links or forms to swap their surrounding parent container without h
 
 ```html
 <div id="card-42" data-frame>
-  <p>Node status: Active</p>
-  <a href="/nodes/42/edit" data-frame-target="_frame">Edit</a>
+  <p>Page status: Active</p>
+  <a href="/pages/42/edit" data-frame-target="_frame">Edit</a>
 </div>
 ```
 
@@ -88,7 +110,7 @@ Forms targeting a frame are automatically intercepted:
 ```
 
 ```html
-<form action="/nodes/42/update" method="POST" data-frame-target="_frame">
+<form action="/pages/42/update" method="POST" data-frame-target="_frame">
   <input type="text" name="title" value="Current Title" />
   <button type="submit" name="action" value="save">Save Changes</button>
 </form>
