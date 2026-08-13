@@ -173,7 +173,7 @@ const SmolFrame = {
 
       // handle title and history
       const isStateless = finalTargetEl.hasAttribute('data-frame-stateless')
-        || options.method !== 'GET';
+        || (options.method && options.method !== 'GET');
       if (!isStateless) {
         const newTitle = doc.querySelector('title');
         if (newTitle) document.title = newTitle.innerText;
