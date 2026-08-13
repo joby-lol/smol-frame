@@ -1,0 +1,88 @@
+/**
+ * smolFrame
+ * https://github.com/joby-lol/smol-frame
+ * (c) 2026 Joby Elliott code@joby.lol
+ * MIT License https://opensource.org/licenses/MIT
+ */
+
+/* stacking context for frames */
+[data-frame] {
+  position: relative;
+  z-index: 0;
+}
+
+/* base overlay styling shared by both loading and error states */
+
+[data-frame]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* loading and submitting indications */
+
+[data-frame-loading] {
+  position: relative;
+  cursor: wait;
+}
+
+[data-frame-loading]::after {
+  z-index: 1;
+  opacity: 0.5;
+  cursor: wait;
+  pointer-events: auto;
+  background-color: #007fff;
+  outline: 2px solid #007fff;
+  outline-offset: 2px;
+  animation: smol-frame-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes smol-frame-pulse {
+  to {
+    background-color: #005bb6;
+  }
+}
+
+/* error feedback state */
+
+[data-frame-error] {
+  position: relative;
+  cursor: not-allowed;
+}
+
+[data-frame-error]::after {
+  z-index: 1;
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: auto;
+  background-color: #991b1b;
+  outline: 2px solid #991b1b;
+  outline-offset: 2px;
+}
+
+[data-frame-error]::before {
+  content: "Error: " attr(data-frame-error);
+  display: block;
+  position: relative;
+  z-index: 2;
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #fef2f2;
+  background-color: #991b1b;
+  font-size: 0.875rem;
+  font-family: system-ui, sans-serif;
+  cursor: not-allowed;
+}
+
+/* missing frame fallback */
+
+[data-frame-hide-missing] {
+  display: block;
+}

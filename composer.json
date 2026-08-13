@@ -1,0 +1,17 @@
+{
+    "name": "joby/smol-frame",
+    "description": "A lightweight and unopinionated alternative to Javascript libraries like HTMX or Turbo, focused on progressively-enhancing websites that would work fine without it.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Joby\\Smol\\Frame\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Joby Elliott",
+            "email": "code@byjoby.com"
+        }
+    ]
+}
