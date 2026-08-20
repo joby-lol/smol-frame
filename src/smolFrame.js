@@ -5,6 +5,10 @@
  * MIT License https://opensource.org/licenses/MIT
  */
 const SmolFrame = {
+  // map of frameId -> AbortController
+  _pending: new Map(),
+
+  // initialize
   init() {
     // Tag initial page load into history state so Back button works to step 0
     SmolFrame.initHistoryState();
@@ -40,8 +44,8 @@ const SmolFrame = {
       let url = action;
       let body = data;
       if (method === 'GET') {
-        const urlObj = new URL(action);
-        data.forEach((val, key) => urlObj.searchParams.set(key, val));
+        const urlObj = new URL(action, window.location.href);
+        urlObj.search = new URLSearchParams(data.entries()).toString();
         url = urlObj.toString();
         body = null;
       }
@@ -134,6 +138,14 @@ const SmolFrame = {
   async navigate(url, targetObject, options = {}) {
     let finalTargetEl = targetObject;
 
+    // Abort any in-flight request for this frame, then register the new one
+    const frameId = targetObject.id;
+    if (frameId && SmolFrame._pending.has(frameId)) {
+      SmolFrame._pending.get(frameId).abort();
+    }
+    const controller = new AbortController();
+    if (frameId) SmolFrame._pending.set(frameId, controller);
+
     targetObject.setAttribute('data-frame-loading', '');
     if (options.isSubmit) targetObject.setAttribute('data-frame-submitting', '');
     targetObject.removeAttribute('data-frame-error');
@@ -142,6 +154,7 @@ const SmolFrame = {
       const res = await fetch(url, {
         method: options.method || 'GET',
         body: options.body,
+        signal: controller.signal,
         headers: {
           'X-Smol-Frame': targetObject.id || '',
           ...(options.headers || {})
@@ -201,19 +214,25 @@ const SmolFrame = {
       finalTargetEl.dispatchEvent(new CustomEvent('smol-frame:loaded', { bubbles: true, detail: { url } }));
 
     } catch (err) {
+      if (err.name === 'AbortError') return; // superseded, not a real error
       console.error('[smolFrame] Load error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Network error';
       finalTargetEl.setAttribute('data-frame-error', errorMessage);
       SmolFrame.scrollToView(finalTargetEl);
     } finally {
-      targetObject.removeAttribute('data-frame-loading');
-      targetObject.removeAttribute('data-frame-submitting');
-      if (finalTargetEl && finalTargetEl !== targetObject) {
-        finalTargetEl.removeAttribute('data-frame-loading');
-        finalTargetEl.removeAttribute('data-frame-submitting');
-        SmolFrame.scrollToView(finalTargetEl);
-      } else {
-        SmolFrame.scrollToView(finalTargetEl);
+      const isCurrent = !frameId || SmolFrame._pending.get(frameId) === controller;
+      if (frameId && SmolFrame._pending.get(frameId) === controller)
+        SmolFrame._pending.delete(frameId);
+      if (isCurrent) {
+        targetObject.removeAttribute('data-frame-loading');
+        targetObject.removeAttribute('data-frame-submitting');
+        if (finalTargetEl && finalTargetEl !== targetObject) {
+          finalTargetEl.removeAttribute('data-frame-loading');
+          finalTargetEl.removeAttribute('data-frame-submitting');
+          SmolFrame.scrollToView(finalTargetEl);
+        } else {
+          SmolFrame.scrollToView(finalTargetEl);
+        }
       }
     }
   }
