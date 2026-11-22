@@ -144,6 +144,14 @@ X-Target-Frame: global-modal
 X-Source-Frame: updated-modal-content
 ```
 
+#### Server-initiated full-page swaps
+The server can also instruct `smolFrame` to redirect/refresh the entire page by returning an HTTP `204` response containing an `X-Redirect-Url` header containing the URL to be navigated to:
+
+```http
+HTTP/1.1 204 No Content
+X-Redirect-Url: https://example.com/final-page.html
+```
+
 ### Identifying `smolFrame` Requests
 Every fetch request sent by `smolFrame` includes the `X-Smol-Frame` header containing the target frame's ID:
 

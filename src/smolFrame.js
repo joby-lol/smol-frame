@@ -175,6 +175,15 @@ const SmolFrame = {
 
       const overrideSourceId = res.headers.get('X-Source-Frame');
       const overrideTargetId = res.headers.get('X-Target-Frame');
+
+      if (
+        res.status === 204 &&
+        res.getRsponseHeader('X-Redirect-Url')
+      ) {
+        window.location.assign(res.getRsponseHeader('X-Redirect-Url'));
+        return;
+      }
+
       if (overrideTargetId)
         finalTargetEl = document.getElementById(overrideTargetId) || targetObject;
 
