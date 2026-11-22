@@ -1,6 +1,6 @@
 # smolFrame
 
-A zero-dependency, ultra-lightweight (~1.3KB gzipped) Progressive Enhancement engine for server-rendered web applications.
+A zero-dependency, ultra-lightweight (<3KB gzipped) Progressive Enhancement engine for server-rendered web applications.
 
 `smolFrame` intercepts standard links and form submissions, fetches full HTML documents via `fetch`, parses out target DOM fragments, and swaps them seamlessly without breaking page reloads, SEO, or browser history.
 

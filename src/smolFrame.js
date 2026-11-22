@@ -8,6 +8,9 @@ const SmolFrame = {
   // map of frameId -> AbortController
   _pending: new Map(),
 
+  // allowed origins
+  allowedOrigins: [window.location.origin],
+
   // initialize
   init() {
     // Tag initial page load into history state so Back button works to step 0
@@ -27,6 +30,10 @@ const SmolFrame = {
       const link = e.target.closest('a');
       if (!link || !link.href) return;
 
+      if (!SmolFrame.isAllowedOrigin(link.href)) return;
+
+      if (['_blank', '_top', '_parent'].includes(link.target)) return;
+
       const targetObject = SmolFrame.findTargetObject(link);
       if (!targetObject) return;
 
@@ -42,13 +49,15 @@ const SmolFrame = {
       const targetObject = SmolFrame.findTargetObject(e.submitter) ?? SmolFrame.findTargetObject(form);
       if (!targetObject) return;
 
-      e.preventDefault();
-      const action = form.action || window.location.href;
-      const method = (form.method || 'GET').toUpperCase();
-      const data = new FormData(form);
+      const action = e.submitter?.formAction || form.action || window.location.href;
+      if (!SmolFrame.isAllowedOrigin(action)) return;
 
-      if (e.submitter && e.submitter.name)
-        data.append(e.submitter.name, e.submitter.value);
+      const target = e.submitter?.formTarget || form.target;
+      if (['_blank', '_top', '_parent'].includes(target)) return;
+
+      const method = (e.submitter?.formMethod || form.method || 'GET').toUpperCase();
+      if (method === 'DIALOG') return;
+      const data = new FormData(form, e.submitter);
 
       let url = action;
       let body = data;
@@ -60,6 +69,7 @@ const SmolFrame = {
       }
 
       SmolFrame.navigate(url, targetObject, { method, body, isSubmit: true });
+      e.preventDefault();
     });
 
     // Handle History Popstate (Back/Forward)
@@ -115,7 +125,7 @@ const SmolFrame = {
   findTargetID(element) {
     if (!element || element === document.body) return false;
     const targetID = element.dataset.frameTarget ?? SmolFrame.findTargetID(element.parentElement);
-    if (!targetID || targetID === '_top' || targetID === '_blank') return false;
+    if (!targetID || ['_top', '_blank', '_parent'].includes(targetID)) return false;
     return targetID;
   },
 
@@ -144,7 +154,16 @@ const SmolFrame = {
       });
   },
 
+  isAllowedOrigin(url) {
+    return SmolFrame.allowedOrigins.includes(new URL(url, window.location.href).origin);
+  },
+
   async navigate(url, targetObject, options = {}) {
+    // check if origin is allowed
+    if (!SmolFrame.isAllowedOrigin(url))
+      return;
+
+    // determine final target
     let finalTargetEl = targetObject;
 
     // Abort any in-flight request for this frame, then register the new one
@@ -170,22 +189,33 @@ const SmolFrame = {
         }
       });
 
+      if (!SmolFrame.isAllowedOrigin(res.url))
+        throw new Error(`Result from an unknown origin: ${new URL(res.url).origin}`);
+
       if (!res.ok)
         throw new Error(`HTTP ${res.status}: ${res.statusText || 'Request failed'}`);
 
       const overrideSourceId = res.headers.get('X-Source-Frame');
       const overrideTargetId = res.headers.get('X-Target-Frame');
 
-      if (
-        res.status === 204 &&
-        res.getRsponseHeader('X-Redirect-Url')
-      ) {
-        window.location.assign(res.getRsponseHeader('X-Redirect-Url'));
+      if (res.status === 204) {
+        const redirect = res.headers.get('X-Redirect-URL');
+        if (!redirect)
+          throw new Error('No redirect specified in X-Redirect-URL header');
+
+        const destination = new URL(redirect, res.url);
+        if (!['http:', 'https:'].includes(destination.protocol))
+          throw new Error(`Invalid redirect protocol: ${destination.protocol}`);
+
+        window.location.assign(destination.href);
         return;
       }
 
       if (overrideTargetId)
-        finalTargetEl = document.getElementById(overrideTargetId) || targetObject;
+        finalTargetEl = document.getElementById(overrideTargetId);
+
+      if (!finalTargetEl?.hasAttribute('data-frame'))
+        throw new Error(`X-Target-Frame ${overrideTargetId || targetObject.id || 'unknown'} is not a valid frame`);
 
       const html = await res.text();
       const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -197,7 +227,7 @@ const SmolFrame = {
         if (finalTargetEl.hasAttribute('data-frame-hide-missing'))
           finalTargetEl.style.display = 'none';
         else
-          window.location.href = url; // Fallback
+          window.location.href = res.url || url; // Fallback
         return;
       }
 
@@ -220,8 +250,16 @@ const SmolFrame = {
             targetElement.innerHTML = syncElement.innerHTML;
           });
 
-        if (options.pushState !== false && finalTargetEl.id)
-          history.pushState({ url: res.url || url, frameId: finalTargetEl.id }, document.title, res.url || url);
+        if (
+          options.pushState !== false &&
+          finalTargetEl.id &&
+          new URL(res.url || url).origin === window.location.origin
+        )
+          history.pushState(
+            { url: res.url || url, frameId: finalTargetEl.id },
+            document.title,
+            res.url || url
+          );
       }
 
       // autofocus
