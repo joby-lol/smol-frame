@@ -46,7 +46,7 @@ const SmolFrame = {
       const form = e.target;
       if (!form) return;
 
-      const targetObject = SmolFrame.findTargetObject(e.submitter) ?? SmolFrame.findTargetObject(form);
+      const targetObject = SmolFrame.findTargetObject(e.submitter) || SmolFrame.findTargetObject(form);
       if (!targetObject) return;
 
       const action = e.submitter?.formAction || form.action || window.location.href;
