@@ -128,18 +128,25 @@ test.describe('response protocol and errors', () => {
         await expectSameDocument(page);
     });
 
-    test('invalid target header does not leave loading state stuck or throw uncaught errors', async ({ page }) => {
+
+    test('invalid target header reports the error on the original frame', async ({ page }) => {
         const pageErrors = [];
         page.on('pageerror', error => pageErrors.push(error.message));
+
         await markDocument(page);
         await page.getByRole('link', { name: 'Invalid target' }).click();
-        await expect(page.locator('#main')).not.toHaveAttribute('data-frame-loading', '');
-        await expect(page.locator('#value')).toHaveText('initial');
+
+        const frame = page.locator('#main');
+
+        await expect(frame).toHaveAttribute(
+            'data-frame-error',
+            /X-Target-Frame does-not-exist is not a valid frame/
+        );
+
+        await expect(frame).not.toHaveAttribute('data-frame-loading', '');
+        await expect(frame.locator('#value')).toHaveText('initial');
         await expectSameDocument(page);
         expect(pageErrors).toEqual([]);
-        // A separate assertion for data-frame-error on #main would currently
-        // expose a UX gap: the invalid override resolves to null, so the catch
-        // block has no element on which to report the error.
     });
 
     test('server errors mark the frame and clear loading state', async ({ page }) => {
