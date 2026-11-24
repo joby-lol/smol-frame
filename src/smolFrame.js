@@ -273,10 +273,10 @@ const SmolFrame = {
       if (err.name === 'AbortError') return; // superseded, not a real error
       console.error('[smolFrame] Load error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Network error';
-      if (finalTargetEl) {
-        finalTargetEl.setAttribute('data-frame-error', errorMessage);
-        SmolFrame.scrollToView(finalTargetEl);
-      }
+      if (!finalTargetEl)
+        finalTargetEl = targetObject;
+      finalTargetEl.setAttribute('data-frame-error', errorMessage);
+      SmolFrame.scrollToView(finalTargetEl);
     } finally {
       const isCurrent = !frameId || SmolFrame._pending.get(frameId) === controller;
       if (frameId && SmolFrame._pending.get(frameId) === controller)
