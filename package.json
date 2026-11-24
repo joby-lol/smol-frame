@@ -1,0 +1,25 @@
+{
+  "name": "smol-frame",
+  "version": "1.0.0",
+  "description": "A zero-dependency, ultra-lightweight (<3KB gzipped) Progressive Enhancement engine for server-rendered web applications.",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joby-lol/smol-frame.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/joby-lol/smol-frame/issues"
+  },
+  "homepage": "https://github.com/joby-lol/smol-frame#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1"
+  }
+}

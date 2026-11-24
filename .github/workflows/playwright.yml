@@ -1,0 +1,28 @@
+name: Browser Tests
+
+on: [push, pull_request]
+
+jobs:
+    tests:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: "26"
+                  cache: npm
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.3"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Install browser
+              run: npx playwright install --with-deps chromium
+
+            - name: Run tests
+              run: npm test
